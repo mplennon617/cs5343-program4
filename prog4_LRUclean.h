@@ -7,10 +7,30 @@ class PRDS_LRUclean {
 
    PRDS_LRUclean(int count) {}
 
-   // TODO: DS IMPLEMENTATION BELOW IS FOR FIFO, CHANGE TO LRU
-    void push(int x) {q.push_back(x);};
-    int pop() {int x = q.front(); q.pop_front(); return(x);};
-    int size() {return q.size();};
+    void push(int x) {
+       if (x < 0) num_dirty++;
+       q.push_back(x);
+    };
+    int pop_clean() {
+        // Pops the first clean location it finds.
+        for (auto iter = q.begin(); iter != q.end(); ++iter){
+            if (*iter > 0) {
+                int x = *iter;
+                q.erase(iter);
+                return(x);
+            }
+        }
+    };
+    int pop_dirty() {
+        // Pops the front of the queue
+        int x = q.front();
+        if (x < 0) num_dirty--;
+        q.pop_front();
+        return(x);
+    }
+    int size() {
+        return q.size();
+    };
 
     // When x is referenced, move it to the back of the queue.
     void move_to_back(int nextpage) {
@@ -27,6 +47,7 @@ class PRDS_LRUclean {
     }
 
     list<int> q;
+    int num_dirty = 0;
 
 };
 
@@ -56,7 +77,13 @@ int Page_Replacement_LRUclean(vector<int>& pages, int nextpage, PRDS_LRUclean *p
             }
         }
         // Get the page to be replaced, and find where it is stored in the pages vector
-        int to_replace = p->pop();
+        int to_replace;
+        if (p->num_dirty == pages.size()) {
+            to_replace = p->pop_dirty();
+        }
+        else {
+            to_replace = p->pop_clean();
+        }
         for (i = 0; i < pages.size(); i++) {
             if (abs(pages[i]) == to_replace)
                 break;
